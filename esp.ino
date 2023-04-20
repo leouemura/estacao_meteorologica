@@ -24,6 +24,9 @@ const char* mqttPassword = ""; // insira aqui sua SENHA MQTT
 unsigned long previousMillis = 0;
 unsigned long interval = 30000;
 
+#define YELLOW_LED 12
+#define GREEN_LED 14
+
 //// A seguir inserimos cada linha do certificado criptografado (ca.crt) criado a partir da configuração TLS:
 //const char* local_root_ca = \ // caso sua conexão seja não segura, comente esta linha
 //
@@ -88,6 +91,9 @@ void setup() {
   Serial2.begin(115200, SERIAL_8N1, RXD2, TXD2);
   Serial.println("Serial Txd is on pin: "+String(TX));
   Serial.println("Serial Rxd is on pin: "+String(RX));
+
+  pinMode(YELLOW_LED, OUTPUT);
+  pinMode(GREEN_LED, OUTPUT);
 
   WiFi.begin(ssid, password); // inicializa a conexão com o Wifi local
 //  while (WiFi.status() != WL_CONNECTED) { // verificação do status da conexão. Caso não tenha conectado, são realizadas novas tentativas de conexão
@@ -178,6 +184,11 @@ void loop() { //Choose Serial1 or Serial2 as required
 
   // read new serial info  
   while (Serial2.available()) {
+    digitalWrite(GREEN_LED,HIGH);
+    delay(500);
+    digitalWrite(GREEN_LED,LOW);
+    delay(500);
+    resetVariableData();
     String dado;
     String stringRead = Serial2.readString();
     int lenStringRead = stringRead.length() + 1;
@@ -299,16 +310,53 @@ void loop() { //Choose Serial1 or Serial2 as required
       Serial.println(WTB_Chuva);
       Serial.print("GlobalRadiation_act :>>");
       Serial.println(GlobalRadiation_act);
-      
-      String dataName[10]={"PTemp","batt_volt", "ML01_RAd", "ML020_Rad", "TempContato1", "TempContato2", "AirTemperature_act", "RelHumidity_act", "WindSpeed_act", "WindDirection_act"};
-      String dataName2[10]={"RelAirPressure", "WindSpeed_act2", "HBr1", "HBr2", "RS1", "RS2", "RScomp1", "RScomp2", "WTB_Chuva", "GlobalRadiation_act"};
-      float dataValue[10]={PTemp, batt_volt, ML01_RAd, ML020_Rad, TempContato1, TempContato2, AirTemperature_act, RelHumidity_act, WindSpeed_act, WindDirection_act};
-      float dataValue2[10]={RelAirPressure, WindSpeed_act2, HBr1, HBr2, RS1, RS2, RScomp1, RScomp2, WTB_Chuva, GlobalRadiation_act};
-      String unity[10]={"Celsius", "V", "ml01rad_unity", "ml020rad_unity", "Celsius", "Celsius", "Celsius", "relhumity_unity", "windspeed_unity", "winddirection_unity"};
-      String unity2[10]={"relairpressure_unity","windspeedact2_unity", "hbr1_unity", "hbr2_unity", "rs1_unity", "rs2_unity", "rscomp1_unity", "rscomp2_unity", "wtbchuva_unity", "globalradiationact_unity"};
-      publishMqtt(dataName, dataValue, unity);
-      publishMqtt(dataName2, dataValue2, unity2);
+
+      if (PTemp != 0){
+        String dataName[10]={"PTemp","batt_volt", "ML01_RAd", "ML020_Rad", "TempContato1", "TempContato2", "AirTemperature_act", "RelHumidity_act", "WindSpeed_act", "WindDirection_act"};
+        String dataName2[10]={"RelAirPressure", "WindSpeed_act2", "HBr1", "HBr2", "RS1", "RS2", "RScomp1", "RScomp2", "WTB_Chuva", "GlobalRadiation_act"};
+        float dataValue[10]={PTemp, batt_volt, ML01_RAd, ML020_Rad, TempContato1, TempContato2, AirTemperature_act, RelHumidity_act, WindSpeed_act, WindDirection_act};
+        float dataValue2[10]={RelAirPressure, WindSpeed_act2, HBr1, HBr2, RS1, RS2, RScomp1, RScomp2, WTB_Chuva, GlobalRadiation_act};
+        String unity[10]={"Celsius", "V", "ml01rad_unity", "ml020rad_unity", "Celsius", "Celsius", "Celsius", "relhumity_unity", "windspeed_unity", "winddirection_unity"};
+        String unity2[10]={"relairpressure_unity","windspeedact2_unity", "hbr1_unity", "hbr2_unity", "rs1_unity", "rs2_unity", "rscomp1_unity", "rscomp2_unity", "wtbchuva_unity", "globalradiationact_unity"};
+        publishMqtt(dataName, dataValue, unity);
+        publishMqtt(dataName2, dataValue2, unity2);
+        for(int i=0; i<3; i++){
+          digitalWrite(GREEN_LED,HIGH);
+          delay(500);
+          digitalWrite(GREEN_LED,LOW);
+          delay(500);
+        }
+      } else {
+        Serial.println("DADO FUDIDO PRA KRL.... Só VEM A PORRA DO ?????????????????????????");
+       digitalWrite(YELLOW_LED,HIGH);
+       delay(5000);
+       digitalWrite(YELLOW_LED,LOW);
+       delay(500);
+      }
     }
+}
+
+void resetVariableData() {
+  PTemp = 0;
+  batt_volt = 0;
+  ML01_RAd = 0;
+  ML020_Rad = 0;
+  TempContato1 = 0;
+  TempContato2 = 0;
+  AirTemperature_act = 0;
+  RelHumidity_act = 0;
+  WindSpeed_act = 0;
+  WindDirection_act = 0;
+  RelAirPressure = 0;
+  WindSpeed_act2 = 0;
+  HBr1 = 0;
+  HBr2 = 0;
+  RS1 = 0;
+  RS2 = 0;
+  RScomp1 = 0;
+  RScomp2 = 0;
+  WTB_Chuva = 0;
+  GlobalRadiation_act = 0;
 }
 
 void publishMqtt(String dataName[20], float dataValue[20], String unity[20]) {
